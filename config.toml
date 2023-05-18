@@ -35,6 +35,8 @@ models = ['abyssorangemix3AOM3_aom3a3.safetensors [eb4099ba9c]', 'deliberate_v11
 
 default_sampler = 'Euler a'
 
+wrap_spoiler = true
+
 [blacklist] # blacklisted generation words
 words = ['nsfw', 'nude', 'naked', 'pussy', 'vagina', 'dick', 'cock', 'penis', 'loli', 'shota', 'child', 'children']
 allow_in_negative = true # allow blacklisted words in negative prompt

@@ -1,8 +1,7 @@
-import base64
-import io
+#
+
 from urllib.parse import urljoin
 import requests
-from PIL import Image
 
 
 class QueueObj:
@@ -25,7 +24,7 @@ class WebUi:
         response = requests.post(url=endpoint, json=payload)
         r = response.json()
         return r, response.status_code
-    
+
     def switch_model(self, queue_obj):
         endpoint = urljoin(self._base_url, '/sdapi/v1/options')
         payload = queue_obj.args
@@ -38,5 +37,5 @@ class WebUi:
         try:
             r = requests.get(endpoint, timeout=10)
             return r.status_code == 200
-        except:
+        except Exception:
             return False

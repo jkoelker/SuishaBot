@@ -17,11 +17,22 @@ class Config:
 
 
 class Bot:
-    def __init__(self, token, config, load_distributor, perm_manager, **options):
+    def __init__(
+        self,
+        token,
+        config,
+        load_distributor,
+        perm_manager,
+        **options,
+    ):
         super().__init__(**options)
         self.load_distributor = load_distributor
         self.perm_manager = perm_manager
-        instance = Suisha(activity=discord.Activity(name='Dr', type=discord.ActivityType.custom))
+        activity = discord.Activity(
+            name='Dr',
+            type=discord.ActivityType.custom,
+        )
+        instance = Suisha(activity=activity)
 
         @instance.event
         async def on_ready():
@@ -32,9 +43,12 @@ class Bot:
         def stringify(queue_obj):
             maps = {
                 'prompt': ('prompt', None),
-                'negative_prompt': ('negative_prompt', params['default_negative']),
+                'negative_prompt': (
+                    'negative_prompt',
+                    params['default_negative'],
+                ),
                 'steps': ('steps', params['default_steps']),
-                'width': ('width', params['default_width']) ,
+                'width': ('width', params['default_width']),
                 'height': ('height', params['default_height']),
                 'seed': ('seed', -1),
                 'cfg_scale': ('guidance_scale', params['default_cfg']),
@@ -50,10 +64,20 @@ class Bot:
             return ' '.join(cmd_parts)
 
         @instance.slash_command(name="model", description="switch model")
-        @option('model', str, description='model to switch to', required=True, choices=params['models'])
+        @option(
+            'model',
+            str,
+            description='model to switch to',
+            required=True,
+            choices=params['models'],
+        )
         async def model(ctx, *, model: str):
             webui = AutoWebUi.WebUi("http://127.0.0.1:7860/")
-            print(f'Request -- {ctx.author.name}#{ctx.author.discriminator} -- change model to {model}')
+            print(
+                'Request -- '
+                f'{ctx.author.name}#{ctx.author.discriminator} -- '
+                f'change model to {model}',
+            )
             queue_obj = AutoWebUi.QueueObj(
                 event_loop=asyncio.get_event_loop(),
                 ctx=ctx,
@@ -68,47 +92,121 @@ class Bot:
                 await ctx.respond("finished switching to "+model)
 
         @instance.slash_command(name="dream", description="Generate an image")
-        @option('prompt', str, description='The prompt for generating the image', required=True)
+        @option(
+            'prompt',
+            str,
+            description='The prompt for generating the image',
+            required=True,
+        )
         @option('negative_prompt', str, description='', required=False)
-        @option('height', int, description='Image Height', required=False,
-                choices=[x for x in range(params['min_height'], params['max_height'] + 64, 64)])
-        @option('width', int, description='Image Width', required=False,
-                choices=[x for x in range(params['min_width'], params['max_width'] + 64, 64)])
-        @option('steps', int, description='Sampling Steps', required=False,
-                choices=[x for x in
-                         range(params['min_steps'], params['max_steps'] + params['step_step'], params['step_step'])])
+        @option(
+            'height',
+            int,
+            description='Image Height',
+            required=False,
+            choices=[
+                x for x in range(
+                    params['min_height'],
+                    params['max_height'] + 64,
+                    64,
+                )],
+        )
+        @option(
+            'width',
+            int,
+            description='Image Width',
+            required=False,
+            choices=[
+                x for x in range(
+                    params['min_width'],
+                    params['max_width'] + 64,
+                    64,
+                )],
+        )
+        @option(
+            'steps',
+            int,
+            description='Sampling Steps',
+            required=False,
+            choices=[
+                x for x in range(
+                    params['min_steps'],
+                    params['max_steps'] + params['step_step'],
+                    params['step_step'],
+                )],
+        )
         @option('seed', int, description='Image seed', required=False)
-        @option('guidance_scale', float, description='CFG scale', required=False)
-        @option('sampler', str, description='Sampling method', required=False, choices=params['samplers'])
-        @option('highres_fix', bool, description='Highres Image Fix', required=False)
-        async def generate(ctx, *, prompt: str,
-                           negative_prompt: Optional[str] = params['default_negative'],
-                           height: Optional[int] = params['default_height'],
-                           width: Optional[int] = params['default_width'],
-                           steps: Optional[int] = params['default_steps'],
-                           seed: Optional[int] = -1,
-                           guidance_scale: Optional[float] = params['default_cfg'],
-                           sampler: Optional[str] = params['default_sampler'],
-                           highres_fix: Optional[bool] = False):
+        @option(
+            'guidance_scale',
+            float,
+            description='CFG scale',
+            required=False,
+        )
+        @option(
+            'sampler',
+            str,
+            description='Sampling method',
+            required=False,
+            choices=params['samplers'],
+        )
+        @option(
+            'highres_fix',
+            bool,
+            description='Highres Image Fix',
+            required=False,
+        )
+        async def generate(
+            ctx,
+            *,
+            prompt: str,
+            negative_prompt: Optional[str] = params['default_negative'],
+            height: Optional[int] = params['default_height'],
+            width: Optional[int] = params['default_width'],
+            steps: Optional[int] = params['default_steps'],
+            seed: Optional[int] = -1,
+            guidance_scale: Optional[float] = params['default_cfg'],
+            sampler: Optional[str] = params['default_sampler'],
+            highres_fix: Optional[bool] = False,
+        ):
             # Check DM access perms
             if ctx.channel.type.name == 'private':
                 perm_manager.can_dm(ctx.author)
-                embed = discord.Embed(title='DM Access Disabled',
-                                      description=f'You do not have permission to DM the bot',
-                                      color=0xEECCAA)
+                embed = discord.Embed(
+                    title='DM Access Disabled',
+                    description='You do not have permission to DM the bot',
+                    color=0xEECCAA,
+                )
                 await ctx.respond(embed=embed, ephemeral=True)
                 return
+
             # Check for banned words
-            search = prompt if config.config['blacklist']['allow_in_negative'] else ' '.join([prompt, negative_prompt])
+            search = ' '.join([prompt, negative_prompt])
+            if config.config['blacklist']['allow_in_negative']:
+                search = prompt
+
             for word in config.config['blacklist']['words']:
                 # remove punctuation from the prompt before searching
-                for word2 in search.translate(str.maketrans('', '', string.punctuation)).split():
+                for word2 in search.translate(
+                    str.maketrans('', '', string.punctuation),
+                ).split():
                     if word.lower() == word2.lower():
-                        print(f'Denied -- {ctx.author.name}#{ctx.author.discriminator} tried to use banned word {word}!')
-                        await ctx.respond(f'You tried to use a banned word! ({word})', ephemeral=True)
+                        print(
+                            'Denied -- '
+                            f'{ctx.author.name}#{ctx.author.discriminator} '
+                            f'tried to use banned word {word}!'
+                        )
+                        await ctx.respond(
+                            f'You tried to use a banned word! ({word})',
+                            ephemeral=True,
+                        )
                         return
+
             # Process request
-            print(f'Request -- {ctx.author.name}#{ctx.author.discriminator} -- Prompt: {prompt}')
+            print(
+                'Request -- '
+                f'{ctx.author.name}#{ctx.author.discriminator} -- '
+                f'Prompt: {prompt}'
+            )
             queue_obj = AutoWebUi.QueueObj(
                 event_loop=asyncio.get_event_loop(),
                 ctx=ctx,
@@ -129,12 +227,20 @@ class Bot:
 
             if response == Status.QUEUED:
                 await ctx.respond(
-                    f'`Generating for {ctx.author.name}#{ctx.author.discriminator}` - `Queue Position: {info}` - `command: {stringify(queue_obj).replace("`", "")}`')
+                    '`Generating for '
+                    f'{ctx.author.name}#{ctx.author.discriminator}` - '
+                    f'`Queue Position: {info}`'
+                )
             elif response == Status.IN_QUEUE:
-                embed = discord.Embed(title='Already in queue!',
-                                      description=f'Please wait for your current image to finish generating before generating a new image\n'
-                                                  f'Your position: {info + 1}',
-                                      color=0xDD0000)
+                embed = discord.Embed(
+                    title='Already in queue!',
+                    description=(
+                        'Please wait for your current image to finish '
+                        'generating before generating a new image\n'
+                        f'Your position: {info + 1}'
+                    ),
+                    color=0xDD0000,
+                )
                 await ctx.respond(embed=embed, ephemeral=True)
             else:
                 embed = discord.Embed(title='Encountered an error: ',
@@ -153,10 +259,11 @@ class Suisha(discord.Bot, ABC):
         if message.channel.type.name != 'private':
             if message.author == self.user:
                 try:
-                    # Check if the message from Shanghai was actually a generation
+                    # Check if the message from Shanghai was actually a
+                    # generation
                     if message.embeds[0].fields[0].name == 'Prompt':
                         await message.add_reaction('❌')
-                except:
+                except Exception:
                     pass
 
     async def on_raw_reaction_add(self, ctx):
@@ -166,6 +273,8 @@ class Suisha(discord.Bot, ABC):
                 return
             message = await message.fetch_message(ctx.message_id)
             if message.embeds:
-                # look at the message footer to see if the generation was by the user who reacted
-                if f'{ctx.member.name}#{ctx.member.discriminator}' in message.embeds[0].footer.text:
+                # look at the message footer to see if the generation was by
+                # the user who reacted
+                member = f'{ctx.member.name}#{ctx.member.discriminator}'
+                if member in message.embeds[0].footer.text:
                     await message.delete()
