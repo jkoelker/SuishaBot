@@ -44,13 +44,16 @@ def _worker_loop(queue, ip, config, webui):
         embed = discord.Embed()
         params = response['parameters']
 
+        prompt = params['prompt']
+        nprompt = params['negative_prompt']
+
         embed.add_field(
             name='Prompt',
-            value=params['prompt'],
+            value=(prompt[:1020] + '...') if len(prompt) > 1020 else prompt,
         )
         embed.add_field(
             name='Negative Prompt',
-            value=params['negative_prompt'],
+            value=(nprompt[:1020] + '...') if len(nprompt) > 1020 else nprompt,
         )
         embed.add_field(
             name='Steps',
