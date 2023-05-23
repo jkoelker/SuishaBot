@@ -128,12 +128,6 @@ class Bot:
             int,
             description='Sampling Steps',
             required=False,
-            choices=[
-                x for x in range(
-                    params['min_steps'],
-                    params['max_steps'] + params['step_step'],
-                    params['step_step'],
-                )],
         )
         @option('seed', int, description='Image seed', required=False)
         @option(
